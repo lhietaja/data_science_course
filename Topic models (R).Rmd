@@ -1,0 +1,106 @@
+---
+title: An R Markdown document converted from "data-science-master/Topic models (R).ipynb"
+output: html_document
+---
+
+# Topic models and LDA
+
+## Dataset for the exercise
+
+* [New York Times Comments](https://www.kaggle.com/aashita/nyt-comments/data), set of reders' comments for articles published in the New York Times
+
+## Overarching research question
+
+The comments allow a perspective to study what kind of concerns people raise when commenting to online articles.
+Examine if meaninful themes emerge from the data set.
+
+```{r}
+## data collection from files.
+## to keep the dataset fairly small, we conduct random data selection here.
+## this is *ONLY* to ensure that the model is suitable for teaching purposes
+
+path <- 'data/nyt-comments/'
+files <- list.files( path ) ## see all files in directory
+files <- files[ grepl("Comments", files) ]
+files <- paste( path, files, sep = '')
+
+set.seed(1)
+
+data <- data.frame()
+
+for( file in files ){
+    d <- read.csv( file )
+    
+    data <- rbind( data, d ) ## TODO: This is a slow and poor method of doing this merging.
+}
+
+documents <- data[ runif( nrow(data) ) > .99, ]
+            
+print("Data sample size" )
+print( nrow(documents) )
+```
+
+```{r}
+documents$commentBody <- as.character( documents$commentBody )
+```
+
+## From text data to document-term matrix
+
+To analyse textual data we transform it to a document term matrix, where in rows we have documents (different comments) and columns represent each word in the dataset.
+
+Note how we **preprocess** the text during this quantification. We remove stopwords (through a set of common English stopwords; we could also create our own lists), stem the content of comments to ensure language is treated well and lower case everything in the content. Thus, the `document_terms` is a huge sparse matrix in the end. Preprocessing is its own kind of art, as it can [influence results](https://www.cambridge.org/core/product/identifier/S1047198717000444/type/journal_article).
+
+```{r}
+library(quanteda)
+
+corp <- corpus( documents, text_field = "commentBody" )
+
+token <- tokens( corp )
+token <- tokens_select( token, pattern = stopwords('en'), selection = 'remove')
+token <- tokens_wordstem( token )
+
+document_terms <- dfm( token )
+```
+
+## From document-term matrix to analysis
+
+Finally we run the Latent Dirichlet Allocation process to our matrix to create topics.
+Similar to k-means, we choose the number of topics; there are also other parameters which could be used to _fine tune_ topic models, see [documentation](https://www.rdocumentation.org/packages/topicmodels/) for details.
+When I use these we with their default parameters as none of them solves the challenge that [topic models work on a different abstration level than humans](http://doi.wiley.com/10.1002/asi.23786).
+
+```{r}
+library(topicmodels)
+
+document_terms <- convert( document_terms, to = "topicmodels")
+model <- LDA( document_terms, k = 5 )
+```
+
+```{r}
+terms( model, 5 )
+```
+
+```{r}
+## see the distribution of a document to different topics
+posterior( model )$topics[1,]
+```
+
+## Tasks
+
+* Compute the distribution of all documents to each topic. Where could you use this?
+* Modify the code and examine a few potential topic numbers. What differences can you detect?
+* Modify the preprocessing and remove all words which are shorter than four characters. What do you learn now?
+
+## Model evaluation
+
+There are many different approaches to evaluate topic models (see, [1](http://doi.acm.org/10.1145/1553374.1553515), [2](https://journal.fi/politiikka/article/view/79629) for examples).
+We can evaluate the suitability of topic models using statistical measurements like loglikelihood, but [some say](http://www.umiacs.umd.edu/~jbg/docs/nips2009-rtl.pdf) that this might be a bad practice - and [others](https://journal.fi/politiikka/article/view/79629) recommend it.
+Here we show how to do it.
+
+```{r}
+logLik( model )
+```
+
+## Tasks
+
+* Evaluate a set of different topics based on this score. Which one would you choose?
+

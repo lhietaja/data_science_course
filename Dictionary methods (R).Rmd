@@ -1,0 +1,90 @@
+---
+title: An R Markdown document converted from "data-science-master/Dictionary methods
+  (R).ipynb"
+output: html_document
+---
+
+# Dictionary methods
+
+## Dataset for the exercise
+
+* [New York Times Comments](https://www.kaggle.com/aashita/nyt-comments/data), set of reders' comments for articles published in the New York Times
+
+## Overarching research question
+
+The comments allow a perspective to study what kind of concerns people raise when commenting to online articles.
+Study what seem to be the target of the commenting: New York Times staff or journalistic guidelines (suggesting that comments serveas a tool for journalists to interact with their audiences _or_ other audience members).
+
+```{r}
+library(stringr)
+library(dplyr)
+```
+
+```{r}
+keywords <- c("New York Times", "NYT")
+keywords <- tolower( keywords )
+keywords <- paste( keywords, collapse = '|' ) ## this is a reqular experssion trick
+```
+
+```{r}
+path <- 'data/nyt-comments/'
+files <- list.files( path ) ## see all files in directory
+files <- files[ grepl("Comments", files) ]
+files <- paste( path, files, sep = '')
+```
+
+```{r}
+counter <- 0
+comments <- 0
+
+for( file in files ) {
+    
+    comments <- comments + nrow( data )
+    
+    data <- read.csv( file )
+    
+    data$commentBodyLower <- tolower( data$commentBody )
+    
+    counter <- counter + sum( str_detect( data$commentBodyLower , keywords ) )
+    
+}
+
+print( paste( counter, "comments mention any of these:", keywords ) )
+print( paste( "There are in total", comments ) )
+```
+
+## Tasks
+
+* Identify other potential keywords for this phenomena and add those keywords in the list.
+* Are there any cases where this approach might break? modify the code to mitigate them when possible
+* The data has `createDate` variable as well which identifies when the comment was created. Based on this, try to look for some temporal trends in comment counts.
+
+# Natural language analysis
+
+In many languages, different words can have different forms. For example, 'I have an apple' and 'I have several apples' convey almost the same information, similarly 'She had an apple' and 'She has an apple' are almost identical. In Finnish language, such examples are much more extensive thanks to the many suffixes words may have several forms.
+
+![Joke about conjugation](https://dailymagyar.files.wordpress.com/2015/10/kutya_meme_ps_2.png)
+
+This might make analysis difficult! Therefore often the language is **stemmed** or **lemmatized** into its basic form. Furthermore, tools such as [Natural Language Toolkit](https://www.nltk.org/) allow parsing text to identify proper nouns, identify named entities or determine if a word is adjective, noun etc.
+
+## Dataset
+
+Use same dataset.
+
+## Overarching research question
+
+Replicate the previous exercise using proper stemmatization. If results change, how and why?
+
+
+```{r}
+library(corpus)
+```
+
+```{r}
+message <- 'This is a longer example! Many words are included here, and we shall all words.'
+stemmed <- text_tokens( message , stemmer = "en") 
+stemmed <- paste( stemmed[[1]], collapse = ' ' )
+    
+print( stemmed )
+```
+

@@ -1,0 +1,9 @@
+---
+title: An R Markdown document converted from "data-science-master/00 Setup R.ipynb"
+output: html_document
+---
+
+```{r}
+install.packages( c("arules", "arulesViz", "caret", "stringr", "dplyr", "corpus", "XML", "quanteda", "topicmodels", "randomForest", "kernlab", "ROSE"))
+```
+
